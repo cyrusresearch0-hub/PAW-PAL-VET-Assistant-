@@ -13,8 +13,6 @@ from duckduckgo_search import DDGS
 from supabase import create_client, Client
 load_dotenv()
 
-# ── Supabase connection ──
-load_dotenv()
 
 # ── Supabase connection ──
 # Works both locally (.env) and on Streamlit Cloud (secrets)
