@@ -1,7 +1,6 @@
-import sqlite3 
 import os
+from supabase import create_client
 from typing import Annotated, Sequence, TypedDict
-from dotenv import load_dotenv
 from langchain_core.messages import BaseMessage, SystemMessage
 from langchain_core.tools import tool
 from langchain_groq import ChatGroq
@@ -10,9 +9,13 @@ from langgraph.graph import StateGraph, END
 from langgraph.prebuilt import ToolNode
 from langgraph.checkpoint.memory import MemorySaver
 from duckduckgo_search import DDGS
-from supabase import create_client, Client
-load_dotenv()
+import streamlit as st
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    pass
 
 # ── Supabase connection ──
 # Works both locally (.env) and on Streamlit Cloud (secrets)
