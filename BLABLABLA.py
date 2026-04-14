@@ -1,5 +1,4 @@
 import os
-from supabase import create_client
 from typing import Annotated, Sequence, TypedDict
 from langchain_core.messages import BaseMessage, SystemMessage
 from langchain_core.tools import tool
@@ -11,20 +10,16 @@ from langgraph.checkpoint.memory import MemorySaver
 from duckduckgo_search import DDGS
 import streamlit as st
 
+# Works locally (.env) and on Streamlit Cloud (secrets)
 try:
     from dotenv import load_dotenv
     load_dotenv()
 except Exception:
     pass
 
-# ── Supabase connection ──
-# Works both locally (.env) and on Streamlit Cloud (secrets)
-import streamlit as st
-SUPABASE_URL = st.secrets.get("SUPABASE_URL") or os.getenv("SUPABASE_URL")
-SUPABASE_KEY = st.secrets.get("SUPABASE_KEY") or os.getenv("SUPABASE_KEY")
-GROQ_API_KEY = st.secrets.get("GROQ_API_KEY") or os.getenv("GROQ_API_KEY")
-os.environ["GROQ_API_KEY"] = GROQ_API_KEY
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+# ── Keys: Streamlit Cloud secrets first, then .env fallback ──
+GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", os.getenv("GROQ_API_KEY"))
+os.environ["GROQ_API_KEY"] = GROQ_API_KEY or ""
 
 # ─────────────────────────────────────────────
 # CLINIC CONFIG — Change these for each client
@@ -218,52 +213,29 @@ HARD RULES — NEVER BREAK THESE
 """
 
 # ─────────────────────────────────────────────
-# DATABASE
+# DATABASE (in-memory, no extra packages needed)
 # ─────────────────────────────────────────────
 
+_conversation_store: dict = {}
+
 def init_db():
-    conn = sqlite3.connect("memory.db")
-    cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS conversations (
-            id        INTEGER PRIMARY KEY AUTOINCREMENT,
-            thread_id TEXT NOT NULL,
-            role      TEXT NOT NULL,
-            message   TEXT NOT NULL,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-    conn.commit()
-    conn.close()
+    pass
 
 def save_message(thread_id: str, role: str, message: str):
-    conn = sqlite3.connect("memory.db")
-    cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO conversations (thread_id, role, message) VALUES (?, ?, ?)",
-        (thread_id, role, message)
-    )
-    conn.commit()
-    conn.close()
+    if thread_id not in _conversation_store:
+        _conversation_store[thread_id] = []
+    _conversation_store[thread_id].append({
+        "role": role,
+        "message": message
+    })
 
 def show_history(thread_id: str):
-    conn = sqlite3.connect("memory.db")
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT role, message, timestamp FROM conversations WHERE thread_id = ?",
-        (thread_id,)
-    )
-    rows = cursor.fetchall()
-    conn.close()
-
-    if not rows:
-        print("No history for this session yet.\n")
+    history = _conversation_store.get(thread_id, [])
+    if not history:
+        print("No history yet.")
         return
-
-    print(f"\n=== HISTORY FOR SESSION: {thread_id} ===")
-    for row in rows:
-        print(f"[{row[2]}] {row[0]}: {row[1]}")
-    print("==========================================\n")
+    for row in history:
+        print(f"{row['role']}: {row['message']}")
 
 
 # ─────────────────────────────────────────────
