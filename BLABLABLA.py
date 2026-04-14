@@ -14,8 +14,15 @@ from supabase import create_client, Client
 load_dotenv()
 
 # ── Supabase connection ──
-SUPABASE_URL = os.getenv("https://lsbmkhumdbisyebfefsk.supabase.co")
-SUPABASE_KEY = os.getenv("sb_secret_Ay6dQKCPcEkZQItIubVl4w_PqElg__4")
+load_dotenv()
+
+# ── Supabase connection ──
+# Works both locally (.env) and on Streamlit Cloud (secrets)
+import streamlit as st
+SUPABASE_URL = st.secrets.get("SUPABASE_URL") or os.getenv("SUPABASE_URL")
+SUPABASE_KEY = st.secrets.get("SUPABASE_KEY") or os.getenv("SUPABASE_KEY")
+GROQ_API_KEY = st.secrets.get("GROQ_API_KEY") or os.getenv("GROQ_API_KEY")
+os.environ["GROQ_API_KEY"] = GROQ_API_KEY
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ─────────────────────────────────────────────
