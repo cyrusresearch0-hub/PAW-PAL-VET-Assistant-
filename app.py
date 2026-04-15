@@ -390,18 +390,21 @@ else:
 
         config = {"configurable": {"thread_id": thread_id}}
 
-        with st.chat_message("assistant", avatar="🐾"):
-            with st.spinner("PawPal is thinking..."):
+with st.chat_message("assistant", avatar="🐾"):
+        with st.spinner("PawPal is thinking..."):
+            try:
                 result = app.invoke(
                     {"messages": [("human", user_input)]},
                     config=config
                 )
                 response = result["messages"][-1].content
-            st.markdown(response)
+            except Exception as e:
+                response = "Sorry, I'm having trouble right now. Please try again!"
+        st.markdown(response)
 
-        st.session_state.messages.append(
-            {"role": "assistant", "content": response}
-        )
+    st.session_state.messages.append({"role": "assistant", "content": response})
+    save_message(thread_id, "agent", response)
+        
         save_message(thread_id, "agent", response)
     st.session_state.messages.append({"role": "assistant", "content": response})
     save_message(thread_id, "agent", response)
