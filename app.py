@@ -291,6 +291,23 @@ st.markdown(f"""
     &nbsp;|&nbsp; For after-hours emergencies, go to your nearest 24-hour animal hospital.
 </div>
 """, unsafe_allow_html=True)
+if st.session_state.message_count < TRIAL_LIMIT:
+    remaining = TRIAL_LIMIT - st.session_state.message_count
+    st.markdown(f"""
+    <div style="text-align:right; margin-bottom: 8px;">
+        <span style="
+            background: white;
+            border: 1.5px solid #b7e8d1;
+            border-radius: 20px;
+            padding: 4px 14px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #2d9e6b;
+        ">
+            💬 {remaining} free messages remaining
+        </span>
+    </div>
+    """, unsafe_allow_html=True)
 
 # ── Chat messages ─────────────────────────────────────────────
 if not st.session_state.messages:
