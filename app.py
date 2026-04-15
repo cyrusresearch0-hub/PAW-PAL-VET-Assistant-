@@ -258,11 +258,7 @@ if "last_thread" not in st.session_state:
 if thread_id != st.session_state.last_thread:
     st.session_state.messages = []
     st.session_state.last_thread = thread_id
-# ── Trial limit ──
-if "message_count" not in st.session_state:
-    st.session_state.message_count = 0
 
-TRIAL_LIMIT = 20
 # ── Header ────────────────────────────────────────────────────
 st.markdown(f"""
 <div class="pawpal-header">
@@ -291,23 +287,6 @@ st.markdown(f"""
     &nbsp;|&nbsp; For after-hours emergencies, go to your nearest 24-hour animal hospital.
 </div>
 """, unsafe_allow_html=True)
-if st.session_state.message_count < TRIAL_LIMIT:
-    remaining = TRIAL_LIMIT - st.session_state.message_count
-    st.markdown(f"""
-    <div style="text-align:right; margin-bottom: 8px;">
-        <span style="
-            background: white;
-            border: 1.5px solid #b7e8d1;
-            border-radius: 20px;
-            padding: 4px 14px;
-            font-size: 0.78rem;
-            font-weight: 700;
-            color: #2d9e6b;
-        ">
-            💬 {remaining} free messages remaining
-        </span>
-    </div>
-    """, unsafe_allow_html=True)
 
 # ── Chat messages ─────────────────────────────────────────────
 if not st.session_state.messages:
@@ -325,72 +304,18 @@ else:
             st.markdown(msg["content"])
 
 # ── Chat input ────────────────────────────────────────────────
-# ── Trial wall ──
-if st.session_state.message_count >= TRIAL_LIMIT:
-    st.markdown("""
-    <div style="
-        background: linear-gradient(135deg, #1a3a2e, #1a2e3a);
-        border-radius: 20px;
-        padding: 32px;
-        text-align: center;
-        color: white;
-        margin-top: 20px;
-    ">
-        <div style="font-size: 2.5rem;">🐾</div>
-        <h2 style="color: #7fe8b8; font-family: Quicksand;">
-            You've used your free preview!
-        </h2>
-        <p style="color: rgba(255,255,255,0.8); font-size: 0.95rem;">
-            PawPal has answered your 20 free questions.<br>
-            Start your 14-day free trial to unlock unlimited access.
-        </p>
-        <div style="
-            background: #2d9e6b;
-            color: white;
-            padding: 14px 32px;
-            border-radius: 50px;
-            font-weight: 700;
-            font-size: 1rem;
-            display: inline-block;
-            margin-top: 16px;
-            cursor: pointer;
-        ">
-            🚀 Start Free 14-Day Trial — $199/month after
-        </div>
-        <p style="
-            color: rgba(255,255,255,0.5);
-            font-size: 0.75rem;
-            margin-top: 12px;
-        ">
-            Cancel anytime. No contracts. Setup included.
-        </p>
-        <p style="
-            color: rgba(255,255,255,0.6);
-            font-size: 0.8rem;
-            margin-top: 8px;
-        ">
-            Questions? Email us: yourname@gmail.com
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+user_input = st.chat_input("Ask about your pet... (e.g. 'My cat isn't eating today')")
 
-else:
-    # ── Normal chat input ──
-    user_input = st.chat_input(
-        f"Ask about your pet... ({TRIAL_LIMIT - st.session_state.message_count} free messages remaining)"
-    )
+if user_input:
+    st.session_state.messages.append({"role": "user", "content": user_input})
+    with st.chat_message("user", avatar="👤"):
+        st.markdown(user_input)
 
-    if user_input:
-        st.session_state.message_count += 1
-        st.session_state.messages.append({"role": "user", "content": user_input})
-        with st.chat_message("user", avatar="👤"):
-            st.markdown(user_input)
+    save_message(thread_id, "user", user_input)
 
-        save_message(thread_id, "user", user_input)
+    config = {"configurable": {"thread_id": thread_id}}
 
-        config = {"configurable": {"thread_id": thread_id}}
-
-with st.chat_message("assistant", avatar="🐾"):
+    with st.chat_message("assistant", avatar="🐾"):
         with st.spinner("PawPal is thinking..."):
             try:
                 result = app.invoke(
@@ -402,9 +327,5 @@ with st.chat_message("assistant", avatar="🐾"):
                 response = "Sorry, I'm having trouble right now. Please try again!"
         st.markdown(response)
 
-    st.session_state.messages.append({"role": "assistant", "content": response})
-    save_message(thread_id, "agent", response)
-        
-        save_message(thread_id, "agent", response)
     st.session_state.messages.append({"role": "assistant", "content": response})
     save_message(thread_id, "agent", response)
